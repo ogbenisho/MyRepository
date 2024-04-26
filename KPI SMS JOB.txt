@@ -1,0 +1,28 @@
+KPI SMS JOB
+select 
+concat('TS KPIs for ', a) || '\n'||
+concat('30Days Rev Gen Base: ' , b) || '\n'||
+concat('90day_Base: ' , c) || '\n'||
+concat('G_Adds: ' , d) || '\n'||
+concat('Prepd: ' , e) || '\n'||
+concat('Postpd: ' , f) || '\n'||
+concat('Churn: ' , g) || '\n'||
+concat('Returnee: ' , h) || '\n'||
+concat('Usage: NGN ', i) || '\n'||
+concat('Topup: NGN ', j) message
+from
+(select 
+	to_char(to_date(ref_date), 'dd/mm/yyyy') a,
+	to_char(n30d_rgen_base, 'FM999,999,999,999') b,
+	to_char(n90day_base, 'FM999,999,999,999') c,
+	to_char(gross_adds, 'FM999,999,999,999') d,
+	to_char(prepaid, 'FM999,999,999,999') e,
+	to_char(postpaid, 'FM999,999,999,999') f,
+	to_char(churn, 'FM999,999,999,999') g,
+	to_char(returnee, 'FM999,999,999,999') h,
+	to_char(usage_revenue, 'FM999,999,999,999') i,
+	to_char(recharges, 'FM999,999,999,999')	j
+from 
+	stg.bi_daily_kpi
+where 
+	ref_date = #flow.STAT_DATE#)
