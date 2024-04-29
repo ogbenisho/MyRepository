@@ -158,14 +158,4 @@ You can stop the daemons by running the following commands:
 $ %HADOOP_HOME%\sbin\stop-dfs.cmd
 $ %HADOOP_HOME%\sbin\stop-yarn.cmd
 ```
-
-
-
-
-
-
-
-
-
-
-
+Thank you.
