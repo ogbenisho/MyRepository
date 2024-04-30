@@ -1,10 +1,10 @@
 # Setup Hadoop on Windows 10 PC
 
 ## Prerequisites:
-1. Windows 10 machine with administrative privileges.
-2. Java Development Kit (JDK) installed.
-3. 7-Zip - to extract the binary package.
-4. Downloaded Hadoop distribution from the official website.
+1. Windows administrative privileges.
+2. Java Development Kit (JDK) installed. [`Java 11`] (https://www.oracle.com/ng/java/technologies/downloads/#java11-windows)
+3. 7-Zip - to extract the Hadoop binary package. [`7-Zip`] (https://www.7-zip.org/download.html)
+4. Downloaded Hadoop distribution from the official website. [`hadoop-3.2.1`] (https://www.apache.org/dyn/closer.cgi/hadoop/common/hadoop-3.2.1/hadoop-3.2.1.tar.gz)
 
 ## Step 1 - Configure environment variables
 
@@ -22,24 +22,25 @@ Open the Start Menu and type in 'environment' and press enter. A new window with
 We will now need to add the bin folders to the `PATH` environment variable.
 1. Click `Path` then `Edit`
 2. Click `New` on the top right
-3. Add `%hadoop-3.2.1\bin`
-4. Add `%hadoop-3.2.1\sbin`
-5. Add `%jdk11\bin`
+3. Add `C:\Program Files\Java\jdk-11\bin`
+4. Add `C:\Hadoop\bin`
+5. Add `C:\Hadoop\bin`
 
 ### Hadoop environment
-In the default installation directory, `Program Files` has a space which is problematic to Hadoop configuration. To fix this, open the `%HADOOP_HOME%\etc\hadoop\hadoop-env.cmd` and change the `JAVA_HOME` line to the following:
+In the default installation directory, `Program Files` has a space which is problematic to Hadoop configuration. To fix this, open the `C:\Hadoop\etc\hadoop\hadoop-env.cmd` and change the `JAVA_HOME` line to the following:
 ```
-set JAVA_HOME=C:\PROGRA~1\Java\jdk11
+set JAVA_HOME=C:\PROGRA~1\Java\jdk-11
 ```
 
 After setting those environment variables, you open CMD and verify that the `hadoop` command is available:
 ```
 $ hadoop -version
+```
 
 ## Step 2 - Configure Hadoop
-Now we are ready to configure the **most important part** - Hadoop configurations which involves Core, YARN, MapReduce, and HDFS configurations.
+Now we are ready to configure the **most important part** - Hadoop configurations involves the Core, YARN, MapReduce, and HDFS configurations.
 
-Each of the files are in `%HADOOP_HOME%\etc\hadoop`.
+Each of these files are situated in `C:\Hadoop\etc\hadoop`.
 
 ### Configure core-site
 Edit `core-site.xml` and replace the `configuration` element with the following:
@@ -55,8 +56,8 @@ Edit `core-site.xml` and replace the `configuration` element with the following:
 ### Configure HDFS
 Create two folders, one for the namenode directory and another for the datanode directory. The following are the two created folders in this example:
 
-1. `%hadoop-3.2.1\data\namenode`
-2. `%hadoop-3.2.1\data\datanode`
+1. `C:\Hadoop\data\dfs\namenode`
+2. `C:\Hadoop\data\dfs\datanode`
 
 Edit `hdfs-site.xml` and replace the `configuration` element with the following:
 ```
@@ -67,11 +68,11 @@ Edit `hdfs-site.xml` and replace the `configuration` element with the following:
   </property>
   <property>
     <name>dfs.namenode.name.dir</name>
-    <value>%hadoop-3.2.1\data\namenode</value>
+    <value>file:///C:/Hadoop/data/dfs/namenode</value>
   </property>
   <property>
     <name>dfs.datanode.data.dir</name>
-    <value>%hadoop-3.2.1\data\datanode</value>
+    <value>file:///C:/Hadoop/data/dfs/datanode</value>
   </property>
 </configuration>
 ```
@@ -103,38 +104,46 @@ Edit `yarn-site.xml` and replace the `configuration` element with the following:
     <name>yarn.nodemanager.auxservices.mapreduce.shuffle.class</name>
     <value>org.apache.hadoop.mapred.ShuffleHandler</value>
   </property>
+  <property>
+    <name>yarn.nodemanager.hostname</name>
+    <value>localhost</value>
+  </property>
 </configuration>
 ```
 
 ## Step 3 - Install Hadoop native IO binary
 To be able to successfully run Hadoop on Windows, we need to download the [`hadoop-3.2.1`](https://github.com/ogbenisho/sho/blob/main/hadoop-3.2.1.zip) and paste the contents of `hadoop-3.2.1/bin` into the extracted location of the Hadoop binary package.
 
-## Step 4 - Format namenode
-Run the following command to format namenode
+## Step 4 - Initialize HDFS and bugfix
+Run the following command and you should find the following error:
 ```
 $ hdfs namenode -format
+...
+ERROR namenode.NameNode: Failed to start namenode.
+...
 ```
+To fix this, you'll need to [download a JAR file with the fix](https://github.com/FahaoTang/big-data/blob/master/hadoop-hdfs-3.2.1.jar). Overwrite the existing `hadoop-hdfs-3.2.1.jar` in `C:\Hadoop\share\hadoop\hdfs` with this new JAR file (you can make a backup of the current one before overwriting if you wish).
 
 ## Step 5 - Start Hadoop Cluster
 Run the following command to start HDFS daemons. When you do so, there should be two new windows that open: one for datanode and the other for namenode:
 
 ```
-$ cd %HADOOP_HOME%\sbin
+$ cd C:\Hadoop\sbin
 $ start-dfs.cmd
 ```
 To check the running status, run the following command:
 ```
-$jps
+$ jps
 ```
 
 ## Step 6 - Start YARN daemons
 Run the following command (with admin permissions) to start YARN daemons. When you do so, there should be two new windows that open: one for resource manager and the other for node manager:
 ```
-$ %HADOOP_HOME%\sbin\start-yarn.cmd
+$ C:\Hadoop\sbin\start-yarn.cmd
 ```
 To check the running status, run the following command:
 ```
-$jps
+$ jps
 ```
 
 ## Step 7 - Check if the cluster is running
@@ -146,16 +155,14 @@ To check, go to your browser and paste the following IPs
 ### YARN resource manager UI
 [http://localhost:8088](http://localhost:8088)
 
-### HDFS Namenode UI info
-[http://localhost:9870/dfshealth.html#tab-overview](http://localhost:9870/dfshealth.html#tab-overview)
-
 ### HDFS Datanode UI info
 [http://localhost:9864/datanode.html](http://localhost:9864/datanode.html)
 
 ## Step 8 - Shutdown Hadoop
 You can stop the daemons by running the following commands:
 ```
-$ %HADOOP_HOME%\sbin\stop-dfs.cmd
-$ %HADOOP_HOME%\sbin\stop-yarn.cmd
+$ C:\Hadoop\sbin\stop-dfs.cmd
+$ C:\Hadoop\sbin\stop-yarn.cmd
 ```
-Thank you.
+
+Thank you
